@@ -54,3 +54,78 @@
   justify-content: center;
   width: calc(400px + 32px + 2px); /* Image width + padding + border */
 }
+
+.filtersRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--ui-kit-space-200);
+}
+
+.selectField {
+  width: 100%;
+  border-radius: var(--ui-kit-radius-element-standard);
+  border: 1px solid var(--ui-kit-color-structure-border-standard);
+  padding: var(--ui-kit-space-100);
+  font: inherit;
+  background-color: var(--ui-kit-color-surface-emphasis);
+  color: inherit;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--ui-kit-space-200);
+}
+
+.iconCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-kit-space-100);
+  background-color: var(--ui-kit-color-surface-neutral);
+  border-radius: var(--ui-kit-radius-surface-small);
+  border: 1px solid transparent;
+  padding: var(--ui-kit-space-150);
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.iconCard:hover,
+.iconCard:focus {
+  border-color: var(--ui-kit-color-action-primary-border);
+  transform: translateY(-1px);
+}
+
+.iconCard:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.iconPreview {
+  width: 100%;
+  aspect-ratio: 1;
+  background-color: var(--ui-kit-color-surface-standard);
+  border-radius: var(--ui-kit-radius-surface-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ui-kit-space-100);
+}
+
+.iconPreview img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.iconInfo {
+  text-align: center;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-kit-space-150);
+  align-items: center;
+  padding: var(--ui-kit-space-400) 0;
+}

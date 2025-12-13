@@ -58,7 +58,7 @@ export function buildConfig({
         styles: path.resolve(process.cwd(), "styles"),
         src: path.resolve(process.cwd(), "src"),
       },
-      extensions: [".ts", ".tsx", ".js", ".css", ".svg", ".woff", ".woff2"],
+      extensions: [".ts", ".tsx", ".js", ".css", ".svg", ".json", ".woff", ".woff2"],
     },
     infrastructureLogging: {
       level: "none",

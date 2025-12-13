@@ -28,6 +28,7 @@
     "sourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
+    "resolveJsonModule": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
@@ -44,7 +45,9 @@
   "include": ["**/*"],
   "ts-node": {
     "compilerOptions": {
-      "module": "commonjs"
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "importHelpers": false
     }
   }
 }
