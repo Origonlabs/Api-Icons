@@ -22,10 +22,14 @@ type IconRecord = {
   style?: string;
   file: string;
   relativePath: string;
+  cdnUrl: string | null;
 };
 
 const ASSETS_DIR = path.resolve(process.cwd(), "assets");
 const OUTPUT_FILE = path.resolve(process.cwd(), "assets_manifest.json");
+const ICON_CDN_BASE_URL = process.env.ICON_CDN_BASE_URL
+  ? process.env.ICON_CDN_BASE_URL.replace(/\/+$/, "")
+  : undefined;
 
 async function readJsonFile(filePath: string): Promise<IconMetadata | null> {
   try {
@@ -100,6 +104,9 @@ async function generateManifest() {
       const { baseName, size, style } = parseFileDetails(svgFile);
       const relativePath = path.join("assets", entry.name, "SVG", svgFile);
       const id = `${categorySlug}-${baseName}`.replace(/--+/g, "-");
+      const cdnUrl = ICON_CDN_BASE_URL
+        ? `${ICON_CDN_BASE_URL}/${encodeURIComponent(entry.name)}/SVG/${encodeURIComponent(svgFile)}`
+        : null;
 
       icons.push({
         id,
@@ -113,6 +120,7 @@ async function generateManifest() {
         style,
         file: svgFile,
         relativePath,
+        cdnUrl,
       });
     }
   }

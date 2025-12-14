@@ -26,11 +26,20 @@ type IconEntry = {
   style?: string;
   file: string;
   relativePath: string;
+  cdnUrl: string | null;
 };
 
 const ICONS: IconEntry[] = (iconManifest.icons as IconEntry[]) ?? [];
 
 const getIconUrl = (icon: IconEntry) => {
+  if (icon.cdnUrl) {
+    return icon.cdnUrl;
+  }
+
+  if (icon.relativePath.startsWith("http")) {
+    return icon.relativePath;
+  }
+
   const base = window.location.origin;
   return new URL(icon.relativePath, `${base}/`).toString();
 };
@@ -216,7 +225,7 @@ export const App = () => {
               disabled={!isUploadSupported || activeIconId === icon.id}
             >
               <div className={styles.iconPreview}>
-                <img src={`/${icon.relativePath}`} alt={icon.name} />
+                <img src={getIconUrl(icon)} alt={icon.name} />
               </div>
               <div className={styles.iconInfo}>
                 <Text variant="bold">{icon.name}</Text>
