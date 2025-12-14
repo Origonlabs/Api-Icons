@@ -1,6 +1,10 @@
 import { readFile, readdir, stat } from "fs/promises";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { config } from "dotenv";
+
+// Load environment variables from .env file
+config();
 
 type UploadConfig = {
   accountId: string;
@@ -68,7 +72,8 @@ async function uploadFile(
   client: S3Client,
   config: UploadConfig,
   relativePath: string,
-) {
+  retries = 5,
+): Promise<boolean> {
   const filePath = path.join(ASSETS_DIRECTORY, relativePath);
   const buffer = await readFile(filePath);
 
@@ -84,8 +89,42 @@ async function uploadFile(
     ContentType: "image/svg+xml",
   });
 
-  await client.send(command);
-  console.log(`Uploaded ${relativePath} -> ${key}`);
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await client.send(command);
+      return true;
+    } catch (error) {
+      if (attempt === retries) {
+        console.error(`✗ Failed ${relativePath}: ${(error as Error).message}`);
+        return false;
+      }
+      // Exponential backoff: 1s, 2s, 4s, 8s
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  return false;
+}
+
+async function uploadBatch(
+  client: S3Client,
+  config: UploadConfig,
+  files: string[],
+  batchNumber: number,
+  totalBatches: number,
+): Promise<{ success: number; failed: number }> {
+  const results = await Promise.all(
+    files.map((file) => uploadFile(client, config, file))
+  );
+
+  const success = results.filter((r) => r).length;
+  const failed = results.length - success;
+
+  console.log(
+    `Batch ${batchNumber}/${totalBatches} complete: ${success} success, ${failed} failed`
+  );
+
+  return { success, failed };
 }
 
 async function main() {
@@ -117,16 +156,50 @@ async function main() {
     },
   });
 
-  console.log(
-    `Uploading ${files.length} files to bucket "${config.bucketName}"...`,
-  );
+  const BATCH_SIZE = 50; // Upload 50 files in parallel at a time
+  const batches: string[][] = [];
 
-  for (const relativePath of files) {
-    // eslint-disable-next-line no-await-in-loop
-    await uploadFile(client, config, relativePath);
+  // Split files into batches
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    batches.push(files.slice(i, i + BATCH_SIZE));
   }
 
-  console.log("Upload complete.");
+  console.log(
+    `Uploading ${files.length} files to bucket "${config.bucketName}" in ${batches.length} batches...`,
+  );
+
+  let totalSuccess = 0;
+  let totalFailed = 0;
+  const startTime = Date.now();
+
+  for (let i = 0; i < batches.length; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const { success, failed } = await uploadBatch(
+      client,
+      config,
+      batches[i]!,
+      i + 1,
+      batches.length,
+    );
+
+    totalSuccess += success;
+    totalFailed += failed;
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const processed = totalSuccess + totalFailed;
+    const remaining = files.length - processed;
+    const rate = processed / (Date.now() - startTime) * 1000;
+    const eta = remaining > 0 ? (remaining / rate).toFixed(0) : 0;
+
+    console.log(
+      `Progress: ${processed}/${files.length} (${totalSuccess} ✓, ${totalFailed} ✗) | ${elapsed}s elapsed, ~${eta}s remaining`,
+    );
+  }
+
+  const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(
+    `\n✅ Upload complete in ${totalTime}s: ${totalSuccess} successful, ${totalFailed} failed out of ${files.length} files.`,
+  );
 }
 
 main().catch((error) => {

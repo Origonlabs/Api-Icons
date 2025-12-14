@@ -1,5 +1,9 @@
 import { readdir, readFile, writeFile, stat } from "fs/promises";
 import path from "path";
+import { config } from "dotenv";
+
+// Load environment variables from .env file
+config();
 
 type IconMetadata = {
   name?: string;

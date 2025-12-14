@@ -11,7 +11,6 @@ import { upload } from "@canva/asset";
 import { addNativeElement } from "@canva/design";
 import { useFeatureSupport } from "@canva/app-hooks";
 import React, { useEffect, useMemo, useState } from "react";
-import iconManifest from "../../../assets_manifest.json";
 import * as styles from "styles/components.css";
 
 type IconEntry = {
@@ -28,8 +27,6 @@ type IconEntry = {
   relativePath: string;
   cdnUrl: string | null;
 };
-
-const ICONS: IconEntry[] = (iconManifest.icons as IconEntry[]) ?? [];
 
 const getIconUrl = (icon: IconEntry) => {
   if (icon.cdnUrl) {
@@ -52,15 +49,35 @@ export const App = () => {
   const [styleFilter, setStyleFilter] = useState("all");
   const [visibleCount, setVisibleCount] = useState(60);
   const [activeIconId, setActiveIconId] = useState<string | null>(null);
+  const [icons, setIcons] = useState<IconEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadManifest = async () => {
+      try {
+        const manifestUrl = "https://cdn.icons.opendex.dev/assets_manifest.json";
+        const response = await fetch(manifestUrl);
+        const data = await response.json();
+        setIcons(data.icons || []);
+      } catch (error) {
+        console.error("Failed to load icon manifest:", error);
+        setIcons([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadManifest();
+  }, []);
 
   const categories = useMemo(() => {
     const result = new Map<string, number>();
-    ICONS.forEach((icon) => {
+    icons.forEach((icon) => {
       result.set(icon.categorySlug, (result.get(icon.categorySlug) ?? 0) + 1);
     });
     return Array.from(result.entries())
       .map(([slug, count]) => {
-        const icon = ICONS.find((entry) => entry.categorySlug === slug);
+        const icon = icons.find((entry) => entry.categorySlug === slug);
         return {
           slug,
           label: icon?.category ?? slug,
@@ -68,24 +85,24 @@ export const App = () => {
         };
       })
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, []);
+  }, [icons]);
 
   const stylesAvailable = useMemo(() => {
     const set = new Set<string>();
-    ICONS.forEach((icon) => {
+    icons.forEach((icon) => {
       if (icon.style) {
         set.add(icon.style);
       }
     });
     return Array.from(set).sort();
-  }, []);
+  }, [icons]);
 
   useEffect(() => {
     setVisibleCount(60);
   }, [search, category, styleFilter]);
 
   const filteredIcons = useMemo(() => {
-    return ICONS.filter((icon) => {
+    return icons.filter((icon) => {
       const matchesCategory =
         category === "all" || icon.categorySlug === category;
       const matchesStyle =
@@ -100,7 +117,7 @@ export const App = () => {
 
       return matchesCategory && matchesStyle && matchesSearch;
     });
-  }, [search, category, styleFilter]);
+  }, [icons, search, category, styleFilter]);
 
   const visibleIcons = filteredIcons.slice(0, visibleCount);
 
@@ -138,12 +155,23 @@ export const App = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className={styles.scrollContainer}>
+        <Rows spacing="2u">
+          <Title size="small">Icon Library</Title>
+          <Text>Loading icons...</Text>
+        </Rows>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.scrollContainer}>
       <Rows spacing="2u">
         <Title size="small">Icon Library</Title>
         <Text tone="secondary">
-          Browse {ICONS.length.toLocaleString()} SVG icons and drop them into
+          Browse {icons.length.toLocaleString()} SVG icons and drop them into
           your design instantly.
         </Text>
 

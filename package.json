@@ -9,7 +9,7 @@
     "start": "ts-node ./scripts/start/start.ts",
     "start:preview": "npm run start -- --preview",
     "extract": "formatjs extract \"src/**/*.{ts,tsx}\" --out-file dist/messages_en.json",
-    "build": "webpack --config webpack.config.ts --mode production && npm run extract",
+    "build": "webpack --config webpack.config.ts --mode production && npm run extract && cp assets_manifest.json dist/",
     "generate:icons": "npx ts-node ./scripts/generate_icon_index.ts",
     "upload:icons": "npx ts-node ./scripts/upload_r2.ts",
     "lint:types": "tsc",

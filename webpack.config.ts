@@ -211,10 +211,17 @@ function buildDevConfig(options?: DevConfig): {
     client: {
       logging: "verbose",
     },
-    static: {
-      directory: path.resolve(process.cwd(), "assets"),
-      publicPath: "/assets",
-    },
+    static: [
+      {
+        directory: path.resolve(process.cwd(), "assets"),
+        publicPath: "/assets",
+      },
+      {
+        directory: path.resolve(process.cwd()),
+        publicPath: "/",
+        serveIndex: false,
+      },
+    ],
   };
 
   if (enableHmr && appOrigin) {
